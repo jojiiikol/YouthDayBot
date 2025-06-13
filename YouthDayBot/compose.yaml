@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres
+    hostname: db
+    env_file:
+      - .env
+    restart: on-failure
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+  bot:
+    build:
+      .
+    command: bash -c "alembic upgrade head && python main.py"
+    depends_on:
+      - db
+    env_file:
+      - .env
+    restart: always
+
+volumes:
+  postgres_data:
