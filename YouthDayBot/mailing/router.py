@@ -3,13 +3,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from admin.keyboard import admin_keyboard
-from mailing.keyboard import mailing_menu_keyboard, cancel_keyboard, mailing_keyboard
+from mailing.keyboard import mailing_menu_keyboard, cancel_keyboard, mailing_keyboard, edit_mailing_keyboard
 from mailing.scheduler import scheduler
-from mailing.state import AddMailingState
+from mailing.state import AddMailingState, EditMailingState
 from mailing.utils import mailing_to_users
 from menu.utils import reformat_to_datetime, break_long_message
 from repository.mailing_repository import MailingRepository
-from schemas.mailing import AddMailingSchema, MailingSchema
+from schemas.mailing import AddMailingSchema, MailingSchema, UpdateMailingSchema
 
 router = Router()
 
@@ -40,22 +40,22 @@ async def add_mailing_text(message: Message, state: FSMContext):
 @router.message(AddMailingState.datetime)
 async def add_mailing_datetime(message: Message, state: FSMContext, bot: Bot, repository=MailingRepository(),
                                schedule=scheduler):
-    date_time = reformat_to_datetime(message.text)
-    data = await state.get_data()
-    mailing_data = AddMailingSchema(
-        text=data['text'],
-        date_time=date_time
-    )
-    mailing = await repository.create(mailing_data)
-    mailing = MailingSchema.from_orm(mailing)
-    schedule.add_job(mailing_to_users, 'date', next_run_time=date_time, args=[mailing])
-    await message.answer(text="Рассылка успешно создана!")
-    await state.clear()
-
-
-# except:
-#     await message.answer(text="Неверный формат, укажите время и дату отправки сообщения: 'ДД-ММ ЧЧ:ММ'")
-#     await state.set_state(AddMailingState.datetime)
+    try:
+        date_time = reformat_to_datetime(message.text)
+        data = await state.get_data()
+        mailing_data = AddMailingSchema(
+            text=data['text'],
+            date_time=date_time
+        )
+        mailing = await repository.create(mailing_data)
+        mailing = MailingSchema.from_orm(mailing)
+        schedule.add_job(mailing_to_users, 'date', next_run_time=date_time, args=[mailing], replace_existing=True,
+                         id=f"mailing_job_{mailing.id}")
+        await message.answer(text="Рассылка успешно создана!")
+        await state.clear()
+    except:
+        await message.answer(text="Неверный формат, укажите время и дату отправки сообщения: 'ДД-ММ ЧЧ:ММ'")
+        await state.set_state(AddMailingState.datetime)
 
 
 @router.callback_query(F.data == "mailing_cancel_add")
@@ -91,5 +91,38 @@ async def get_mailing(callback: CallbackQuery, repository=MailingRepository()):
     reformat_text = break_long_message(message_text)
 
     await callback.answer()
-    for text in reformat_text:
-        await callback.message.answer(text)
+    if len(reformat_text) > 1:
+        for text in reformat_text[0:len(reformat_text) - 1]:
+            await callback.message.answer(text)
+        await callback.message.answer(reformat_text[-1], reply_markup=edit_mailing_keyboard(mailing_id))
+    else:
+        await callback.message.answer(reformat_text[0], reply_markup=edit_mailing_keyboard(mailing_id))
+
+
+@router.callback_query(F.data.startswith("mailing_edit_"))
+async def edit_mailing(callback: CallbackQuery, state: FSMContext):
+    id = int(callback.data.split("_")[2])
+    await callback.message.edit_text("Укажите новый текст", reply_markup=cancel_keyboard())
+    await state.set_data({"mailing_id": id})
+    await state.set_state(EditMailingState.text)
+
+
+@router.message(EditMailingState.text)
+async def new_text(message: Message, state: FSMContext, repository=MailingRepository()):
+    text = message.text
+    data = await state.get_data()
+    mailing_id = data["mailing_id"]
+
+    mailing = UpdateMailingSchema(text=text)
+    await repository.update(id=mailing_id, mailing_data=mailing)
+
+    await message.answer("Рассылка успешно изменена!")
+    await state.clear()
+
+
+@router.callback_query(F.data.startswith("mailing_delete_"))
+async def delete_mailing(callback: CallbackQuery, repository=MailingRepository()):
+    id = int(callback.data.split("_")[2])
+    await repository.delete(id)
+    scheduler.remove_job(f"mailing_job_{id}")
+    await callback.message.edit_text("Рассылка успешно удалена")

@@ -26,3 +26,4 @@ async def finish_mailing(id: int, mailing_repository=MailingRepository()):
         finished=True
     )
     await mailing_repository.update(id, finished_schema)
+

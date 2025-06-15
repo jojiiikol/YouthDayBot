@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from database import new_session
 from models.mailing import MailingModel
@@ -45,3 +45,9 @@ class MailingRepository():
             await session.commit()
             await session.refresh(mailing)
             return mailing
+
+    async def delete(self, id: int):
+        async with new_session() as session:
+            query = delete(MailingModel).where(MailingModel.id == id)
+            await session.execute(query)
+            await session.commit()

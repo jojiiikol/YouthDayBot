@@ -59,3 +59,12 @@ async def mailing_keyboard(page=0, repository=MailingRepository()):
     return keyboard.as_markup()
 
 
+def edit_mailing_keyboard(id: int):
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(
+        InlineKeyboardButton(text="Изменить текст", callback_data=f"mailing_edit_{id}"),
+        InlineKeyboardButton(text="Удалить", callback_data=f"mailing_delete_{id}")
+    )
+    return keyboard.adjust(2).as_markup()
+
+
