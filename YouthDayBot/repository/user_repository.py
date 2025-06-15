@@ -59,3 +59,9 @@ class UserRepository:
             await session.refresh(user)
             return user
 
+    async def get_all_username(self):
+        async with new_session() as session:
+            query = select(UserModel.tg_id)
+            result = await session.execute(query)
+            return result.scalars().all()
+

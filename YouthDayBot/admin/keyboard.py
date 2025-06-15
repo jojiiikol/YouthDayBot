@@ -9,10 +9,11 @@ def admin_keyboard():
     keyboard = ReplyKeyboardBuilder()
     keyboard.add(
         KeyboardButton(text="Управлять мероприятиями"),
+        KeyboardButton(text="Управлять рассылкой"),
         KeyboardButton(text="Просмотр аналитики"),
         KeyboardButton(text="◀️ Назад")
     )
-    return keyboard.adjust(2, 1).as_markup(resize_keyboard = True)
+    return keyboard.adjust(2, 1, 1).as_markup(resize_keyboard = True)
 
 
 async def admin_event_keyboard(page=0, repository=EventRepository(), callback_data="admin_event_"):

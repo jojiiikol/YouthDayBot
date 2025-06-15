@@ -10,6 +10,7 @@ from alembic import context
 from models.user import UserModel
 from models.event import EventModel
 from models.image import ImageModel
+from models.mailing import MailingModel
 from models import base
 
 load_dotenv()
