@@ -17,6 +17,8 @@ services:
       - db
     env_file:
       - .env
+    volumes:
+      - ./picture:/app/picture
     restart: always
 
 volumes:
