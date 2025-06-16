@@ -3,6 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from admin.keyboard import admin_keyboard
+from filters.admin import AdminFilter
 from mailing.keyboard import mailing_menu_keyboard, cancel_keyboard, mailing_keyboard, edit_mailing_keyboard
 from mailing.scheduler import scheduler
 from mailing.state import AddMailingState, EditMailingState
@@ -14,30 +15,30 @@ from schemas.mailing import AddMailingSchema, MailingSchema, UpdateMailingSchema
 router = Router()
 
 
-@router.message(F.text == "Управлять рассылкой")
+@router.message(AdminFilter(), F.text == "Управлять рассылкой")
 async def mailing_menu(message: Message):
     await message.answer(text="Выберите необходимую функцию", reply_markup=mailing_menu_keyboard())
 
 
-@router.message(F.text == "В меню")
+@router.message(AdminFilter(),F.text == "В меню")
 async def mailing_menu(message: Message):
     await message.answer(text="Выберите необходимую функцию", reply_markup=admin_keyboard())
 
 
-@router.message(F.text == "Запланировать сообщение")
+@router.message(AdminFilter(), F.text == "Запланировать сообщение")
 async def add_mailing(message: Message, state: FSMContext):
     await message.answer("Напишите текст для рассылки", reply_markup=cancel_keyboard())
     await state.set_state(AddMailingState.text)
 
 
-@router.message(AddMailingState.text)
+@router.message(AdminFilter(), AddMailingState.text)
 async def add_mailing_text(message: Message, state: FSMContext):
     await state.set_data({"text": message.text})
     await message.answer(text="Укажите время и дату отправки сообщения: 'ДД-ММ ЧЧ:ММ'", reply_markup=cancel_keyboard())
     await state.set_state(AddMailingState.datetime)
 
 
-@router.message(AddMailingState.datetime)
+@router.message(AdminFilter(), AddMailingState.datetime)
 async def add_mailing_datetime(message: Message, state: FSMContext, bot: Bot, repository=MailingRepository(),
                                schedule=scheduler):
     try:
@@ -58,27 +59,27 @@ async def add_mailing_datetime(message: Message, state: FSMContext, bot: Bot, re
         await state.set_state(AddMailingState.datetime)
 
 
-@router.callback_query(F.data == "mailing_cancel_add")
+@router.callback_query(AdminFilter(), F.data == "mailing_cancel_add")
 async def cancel_add_mailing(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.clear()
     await callback.message.answer(text="Операция отменена")
 
 
-@router.message(F.text == "Рассылки в работе")
+@router.message(AdminFilter(), F.text == "Рассылки в работе")
 async def show_mailing(message: Message):
     keyboard = await mailing_keyboard()
     await message.answer(text="Выберите рассылку", reply_markup=keyboard)
 
 
-@router.callback_query(F.data.startswith("mailing_page_"))
+@router.callback_query(AdminFilter(), F.data.startswith("mailing_page_"))
 async def update_keyboard(callback: CallbackQuery):
     page = int(callback.data.split("_")[2])
     keyboard = await mailing_keyboard(page)
     await callback.message.edit_text(text="Выберите рассылку", reply_markup=keyboard)
 
 
-@router.callback_query(F.data.startswith("get_mailing_"))
+@router.callback_query(F.data.startswith("get_mailing_"), AdminFilter())
 async def get_mailing(callback: CallbackQuery, repository=MailingRepository()):
     mailing_id = int(callback.data.split("_")[2])
     mailing = await repository.get(mailing_id)
@@ -99,7 +100,7 @@ async def get_mailing(callback: CallbackQuery, repository=MailingRepository()):
         await callback.message.answer(reformat_text[0], reply_markup=edit_mailing_keyboard(mailing_id))
 
 
-@router.callback_query(F.data.startswith("mailing_edit_"))
+@router.callback_query(AdminFilter(), F.data.startswith("mailing_edit_"))
 async def edit_mailing(callback: CallbackQuery, state: FSMContext):
     id = int(callback.data.split("_")[2])
     await callback.message.edit_text("Укажите новый текст", reply_markup=cancel_keyboard())
@@ -107,7 +108,7 @@ async def edit_mailing(callback: CallbackQuery, state: FSMContext):
     await state.set_state(EditMailingState.text)
 
 
-@router.message(EditMailingState.text)
+@router.message(AdminFilter(), EditMailingState.text)
 async def new_text(message: Message, state: FSMContext, repository=MailingRepository()):
     text = message.text
     data = await state.get_data()
@@ -120,7 +121,7 @@ async def new_text(message: Message, state: FSMContext, repository=MailingReposi
     await state.clear()
 
 
-@router.callback_query(F.data.startswith("mailing_delete_"))
+@router.callback_query(AdminFilter(), F.data.startswith("mailing_delete_"))
 async def delete_mailing(callback: CallbackQuery, repository=MailingRepository()):
     id = int(callback.data.split("_")[2])
     await repository.delete(id)
