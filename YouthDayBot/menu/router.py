@@ -1,6 +1,7 @@
 from aiogram import Router, F, Bot
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, InputFile, FSInputFile
+from aiogram.utils.media_group import MediaGroupBuilder
 
 from menu.keyboard import week_info_keyboard, main_menu_keyboard, events_keyboard
 from menu.utils import break_long_message, get_event_text, send_event
@@ -42,7 +43,13 @@ async def menu_return(message: Message):
 
 @router.message(F.text == "🗓️ Полное расписание")
 async def full_menu(message: Message):
-    await message.answer(text="Текст")
+    images = ["picture/week1.jpg", "picture/week2.jpg", "picture/week3.jpg"]
+    media = MediaGroupBuilder()
+    for image in images:
+        image = FSInputFile(path=image)
+        media.add_photo(media=image)
+    await message.answer_media_group(media=media.build())
+
 
 
 @router.message(F.text == "📜 Узнать подробно")
