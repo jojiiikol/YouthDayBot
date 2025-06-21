@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, select
+from sqlalchemy import BigInteger, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
@@ -65,3 +65,23 @@ class UserRepository:
             result = await session.execute(query)
             return result.scalars().all()
 
+    async def get_registration_data(self):
+        async with new_session() as session:
+            query = select(func.date(UserModel.date_joined), func.count(UserModel.id)).group_by(func.date(UserModel.date_joined)).order_by(func.date(UserModel.date_joined))
+            result = await session.execute(query)
+            result = result.all()
+            return result
+
+    async def get_count_subscribers(self):
+        async with new_session() as session:
+            query = select(func.count(UserSubscribeModel.id))
+            result = await session.execute(query)
+            result = result.scalar_one_or_none()
+            return result
+
+    async def get_count_sex_users(self):
+        async with new_session() as session:
+            query = select(UserAdditionalModel.sex, func.count(UserAdditionalModel.id)).group_by(UserAdditionalModel.sex)
+            result = await session.execute(query)
+            result = result.all()
+            return result

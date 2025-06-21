@@ -8,9 +8,11 @@ from aiogram.types import Message, InlineKeyboardMarkup, CallbackQuery
 from dotenv import load_dotenv
 
 from admin.keyboard import admin_keyboard, admin_event_keyboard, edit_keyboard, cancel_keyboard, manage_event_keyboard, \
-    delete_keyboard, edit_images_keyboard
+    delete_keyboard, edit_images_keyboard, get_statistic_keyboard
 from admin.state import AdminState, ChangeEventState, AddEventState
-from menu.utils import get_event_text_admin, reformat_to_datetime, send_event_admin, send_event, set_data_event
+from filters.admin import AdminFilter
+from menu.utils import get_event_text_admin, reformat_to_datetime, send_event_admin, send_event, set_data_event, \
+    break_long_message
 from repository.event_repository import EventRepository
 from repository.image_repository import ImageRepository
 from repository.user_repository import UserRepository
@@ -47,18 +49,18 @@ async def admin_password(message: Message, state: FSMContext, repository=UserRep
     await state.clear()
 
 
-@router.message(F.text == "Управлять мероприятиями")
+@router.message(AdminFilter(), F.text == "Управлять мероприятиями")
 async def admin_event(message: Message):
     await message.answer(text="Выберите необходимую функцию", reply_markup=manage_event_keyboard())
 
 
-@router.message(F.text == "Изменить мероприятие")
+@router.message(AdminFilter(), F.text == "Изменить мероприятие")
 async def change_event(message: Message):
     keyboard = await admin_event_keyboard()
     await message.answer(text="Выберите мероприятие", reply_markup=keyboard)
 
 
-@router.message(F.text == "Обратно в меню")
+@router.message(AdminFilter(), F.text == "Обратно в меню")
 async def return_to_admin_menu(message: Message):
     await message.answer(text="Выберите функцию", reply_markup=admin_keyboard())
 
@@ -169,7 +171,7 @@ async def cancel_edit(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(text="Выберите необходмую функцию")
 
 
-@router.message(F.text == "Добавить мероприятие")
+@router.message(AdminFilter(), F.text == "Добавить мероприятие")
 async def add_event(message: Message, state: FSMContext):
     await state.set_state(AddEventState.name)
     await message.answer(
@@ -246,7 +248,7 @@ async def add_images(message: Message, state: FSMContext, bot: Bot, image_repo=I
     await state.clear()
 
 
-@router.message(F.text == "Удалить мероприятие")
+@router.message(AdminFilter(), F.text == "Удалить мероприятие")
 async def delete_event(message: Message):
     keyboard = await admin_event_keyboard(callback_data="admin_delete_")
     await message.answer(text="Выберите мероприятие", reply_markup=keyboard)
@@ -271,3 +273,43 @@ async def delete_event(callback: CallbackQuery, event_repo=EventRepository(), im
         await callback.message.edit_text(text="Мероприятие удалено")
     else:
         await callback.message.edit_text(text="Операция отменена")
+
+@router.message(AdminFilter(), F.text == "Просмотр аналитики")
+async def view_analytics(message: Message):
+    await message.answer(text="Выберите необходимую функцию", reply_markup=get_statistic_keyboard())
+
+
+@router.callback_query(F.data == "statistic_views")
+async def statistic_views(callback: CallbackQuery, repository = EventRepository()):
+    await callback.answer()
+    events = await repository.get_all()
+    events = [EventSchema.from_orm(event) for event in events]
+    message = "<b>Просмотры:</b>\n\n"
+    for event in events:
+        message += f"{event.name} -- {event.views}\n"
+    message = break_long_message(message)
+    for text in message:
+        await callback.message.answer(text)
+
+@router.callback_query(F.data.startswith("statistic_users"))
+async def statistic_users(callback: CallbackQuery, repository=UserRepository()):
+    await callback.answer()
+    message = "<b>Кол-во зарегистрировавшихся человек в боте: </b>\n"
+    registration_data = await repository.get_registration_data()
+    for data in registration_data:
+        message += f"{data[0]} --> {data[1]}\n"
+
+    subscribers_count = await repository.get_count_subscribers()
+    message += f"\n<b>Бот привлек человек на канал: </b> {subscribers_count}"
+
+    message += "\n\n<b>Целевая аудитория: </b>\n"
+    sex_count = await repository.get_count_sex_users()
+    for user in sex_count:
+        if user[0].value == "Male":
+            message += f"Мужчин: {user[1]}\n"
+        else:
+            message += f"Женщин: {user[1]}\n"
+    message = break_long_message(message)
+    for text in message:
+        await callback.message.answer(text=text)
+

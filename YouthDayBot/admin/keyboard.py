@@ -97,3 +97,11 @@ def edit_images_keyboard(event_id):
         InlineKeyboardButton(text="Отменить", callback_data="cancel_edit")
     )
     return keyboard.adjust(2, 1).as_markup()
+
+def get_statistic_keyboard():
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(
+        InlineKeyboardButton(text="Просмотры", callback_data=f"statistic_views"),
+        InlineKeyboardButton(text="Поток пользователей", callback_data=f"statistic_users"),
+    )
+    return keyboard.adjust().as_markup()
