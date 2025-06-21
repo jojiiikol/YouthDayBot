@@ -60,7 +60,7 @@ async def menu_events(message: Message):
 
 @router.message(F.text == "🥳 Программа дня молодежи")
 async def menu_day(message: Message, bot: Bot):
-    photo = FSInputFile(path="picture/youth_day.png")
+    photo = FSInputFile(path="picture/youth_day.jpg")
     await message.answer_photo(photo=photo)
 
 
