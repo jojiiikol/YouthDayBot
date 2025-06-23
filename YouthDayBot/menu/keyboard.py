@@ -10,9 +10,9 @@ from schemas.event import EventSchema
 def main_menu_keyboard():
     keyboard = ReplyKeyboardBuilder()
     keyboard.add(
-        KeyboardButton(text="🤹 О фестивале"),
+        KeyboardButton(text="🤹 О неделе молодёжи «Север Молодой»"),
         KeyboardButton(text="📆 Программа недели"),
-        KeyboardButton(text="🥳 Программа дня молодежи"),
+        KeyboardButton(text="🥳 Карта Дня Молодежи - 2025"),
         KeyboardButton(text="🎟️ О розыгрыше"),
         KeyboardButton(text="✉️ Связь с организатором")
                  )

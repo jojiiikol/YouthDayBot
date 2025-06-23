@@ -24,7 +24,7 @@ async def start(message: Message, state: FSMContext, repository: UserRepository 
         else:
             if not user.subscribe:
                 await message.answer(
-                    f"{user.username}, прошу подписаться на следующие каналы для работы со мной: \n t.me/testBotDMNV2025 \n Канал 2",
+                    f"{user.username}, прошу подписаться на следующие каналы для работы со мной: \n@molodnv",
                     reply_markup=check_subscribe_keyboard().as_markup()
                 )
             else:
@@ -39,13 +39,13 @@ async def start(message: Message, state: FSMContext, repository: UserRepository 
         user_model = await repository.create(user)
         user = UserSchema.from_orm(user_model)
         await message.answer(
-            f"{user.username}, прошу подписаться на следующие каналы для работы со мной: \n t.me/testBotDMNV2025 \n Канал 2",
+            f"{user.username}, прошу подписаться на следующие каналы для работы со мной: \n@molodnv",
             reply_markup=check_subscribe_keyboard().as_markup()
         )
 
 @router.callback_query(F.data == "check_subscribe")
 async def check_subscribe(callback: CallbackQuery, bot: Bot, state: FSMContext, repository = UserRepository()):
-    member = await bot.get_chat_member("-1002734352735", callback.from_user.id)
+    member = await bot.get_chat_member("-1001858677023", callback.from_user.id)
     if member.status == 'left':
         await callback.answer(
             "К сожалению вы не подписались на указанные каналы. Подпишитесь и попробуйте еще раз",
