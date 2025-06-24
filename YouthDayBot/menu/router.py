@@ -66,7 +66,7 @@ async def menu_events(message: Message):
     await message.answer(text="Выберите мероприятие", reply_markup=keyboard.as_markup())
 
 
-@router.message(F.text == "🥳 Карта Дня Молодежи - 2025")
+@router.message(F.text == "🥳 День Молодёжи - 2025")
 async def menu_day(message: Message, bot: Bot):
     photo = FSInputFile(path="picture/youth_day.jpg")
     await message.answer_photo(photo=photo)

@@ -12,7 +12,7 @@ def main_menu_keyboard():
     keyboard.add(
         KeyboardButton(text="🤹 О неделе молодёжи «Север Молодой»"),
         KeyboardButton(text="📆 Программа недели"),
-        KeyboardButton(text="🥳 Карта Дня Молодежи - 2025"),
+        KeyboardButton(text="🥳 День Молодёжи - 2025"),
         KeyboardButton(text="🎟️ О розыгрыше"),
         KeyboardButton(text="✉️ Связь с организатором")
                  )
