@@ -18,6 +18,18 @@ def main_menu_keyboard():
                  )
     return keyboard.adjust(1, 2, 1, 1).as_markup(resize_keyboard=True, input_field_placeholder="Клик :)")
 
+def get_blocks_keyboard():
+    keyboard = InlineKeyboardBuilder()
+    keyboard.add(
+        InlineKeyboardButton(text="🔵 Движение", callback_data="block_move"),
+        InlineKeyboardButton(text="🟡 Единство", callback_data="block_unity"),
+        InlineKeyboardButton(text="🟠 Память", callback_data="block_memory"),
+        InlineKeyboardButton(text="🟣 Любовь", callback_data="block_love"),
+        InlineKeyboardButton(text="🟢 Свобода", callback_data="block_freedom"),
+        InlineKeyboardButton(text="🎤 Cцена", callback_data="block_scene"),
+    )
+    return keyboard.adjust(2, 2, 2).as_markup()
+
 def week_info_keyboard():
     keyboard = ReplyKeyboardBuilder()
     keyboard.add(

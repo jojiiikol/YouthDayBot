@@ -3,13 +3,20 @@ from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, InputFile, FSInputFile
 from aiogram.utils.media_group import MediaGroupBuilder
 
-from menu.keyboard import week_info_keyboard, main_menu_keyboard, events_keyboard
+from menu.keyboard import week_info_keyboard, main_menu_keyboard, events_keyboard, get_blocks_keyboard
 from menu.utils import break_long_message, get_event_text, send_event
 from repository.event_repository import EventRepository
 from schemas.event import EventSchema, UpdateEventSchema
 
 router = Router()
-
+block_picture = {
+    "scene": "picture/block6.jpg",
+    "love": "picture/block2.jpg",
+    "freedom": "picture/block1.jpg",
+    "memory": "picture/block3.jpg",
+    "unity": "picture/block4.jpg",
+    "move": "picture/block5.jpg",
+}
 
 @router.message(Command("test"))
 async def test(message: Message):
@@ -63,6 +70,16 @@ async def menu_events(message: Message):
 async def menu_day(message: Message, bot: Bot):
     photo = FSInputFile(path="picture/youth_day.jpg")
     await message.answer_photo(photo=photo)
+    await message.answer(text="Выберите площадку", reply_markup=get_blocks_keyboard())
+
+@router.callback_query(F.data.startswith("block_"))
+async def block_info(callback: CallbackQuery):
+    await callback.answer()
+    block_name = callback.data.split("_")[1]
+    picture_path = block_picture[block_name]
+    picture = FSInputFile(path=picture_path)
+    await callback.message.delete()
+    await callback.message.answer_photo(photo=picture, reply_markup=get_blocks_keyboard())
 
 
 @router.message(F.text == "🎟️ О розыгрыше")
